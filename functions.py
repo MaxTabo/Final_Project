@@ -1,5 +1,5 @@
 import pandas as pd
-
+import pycountry_convert as pc
 
 def merge(df1,df2,columns):
     df3= pd.merge(df1, df2,  how='left', left_on=columns, right_on =columns)
@@ -27,29 +27,17 @@ def change_value(df,column1,name1,column2,name_2):
 def change_main_values(df_main):
     df_main=change_value(df_main,'Entity','World','Code','WRL')
     df_main=change_value(df_main,'Entity','Africa','Code','AFR')
-
     df_main=change_value(df_main,'Entity','Asia Pacific','Code','ASP')
-
     df_main=change_value(df_main,'Entity','Eastern Africa','Code','EAF')
-
     df_main=change_value(df_main,'Entity','European Union (27)','Code','EUU')
-
     df_main=change_value(df_main,'Entity','Middle Africa','Code','MAF')
-
     df_main=change_value(df_main,'Entity','Middle Africa','Code','MAF')
-
     df_main=change_value(df_main,'Entity','Europe','Code','EUR')
-
     df_main=change_value(df_main,'Entity','Western Africa','Code','WAF')
-
     df_main=change_value(df_main,'Entity','OECD','Code','OECD')
-
     df_main=change_value(df_main,'Entity','Middle East','Code','MDLE')
-
     df_main=change_value(df_main,'Entity','Non-OECD','Code','NOECD')
-
     df_main=change_value(df_main,'Entity','OECD','Code','OECD')
-
     df_main = df_main[df_main.Entity != 'CIS']
     return df_main
 
@@ -89,4 +77,7 @@ def change_growth_values(df_main):
     return df_main
 
 
-
+def convert(row):
+    cn_code= pc.country_name_to_country_alpha2(row.ENTITY,cn_name_format='default')
+    conti_code=pc.country_alpha2_to_continent_code(cn_code)
+    return conti_code
