@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 import os
 import warnings
 warnings.filterwarnings("ignore")
+import pycountry_convert as pc
 
 df = pd.read_csv("Data\wind-share-energy.csv")
 df1 = pd.read_csv("Data\wind-generation.csv")
@@ -30,6 +31,7 @@ df18 = pd.read_csv("Data/annual-percentage-change-solar.csv")
 df19 = pd.read_csv("Data/annual-percentage-change-renewables.csv")
 df20 = pd.read_csv("Data/annual-change-solar.csv")
 df21 = pd.read_csv("Data/annual-change-renewables.csv")
+dfGDP = pd.read_csv("Data/world-happiness-report-2021.csv")
 
 
 df_list=[df,df6,df7,df8,df9,df10,df11,df12,df13,df15,df17]
@@ -47,32 +49,32 @@ df_main=functions.change_main_values(df_main)
 
 df_growth['Entity']=df_growth['Entity'].str.strip()
 
-df_growth['Entity'] = df_growth['Entity'].str.replace('\(BP\)','')
-df_growth['Entity'] = df_growth['Entity'].str.replace('Other Southern Africa','South Africa')
-df_growth['Entity'] = df_growth['Entity'].str.replace('Other South America','South America')
-df_growth['Entity'] = df_growth['Entity'].str.replace('Other South and Central America','South and Central America')
-df_growth['Entity'] = df_growth['Entity'].str.replace('Other Northern Africa','Northern Africa')
-df_growth['Entity'] = df_growth['Entity'].str.replace('Other Middle East','Middle East')
-df_growth['Entity'] = df_growth['Entity'].str.replace('Other Europe','Europe')
-df_growth['Entity'] = df_growth['Entity'].str.replace('Other Caribbean','Caribbean')
-df_growth['Entity'] = df_growth['Entity'].str.replace('Other Africa','Africa')
-df_growth['Entity'] = df_growth['Entity'].str.replace('Other Asia Pacific','Asia Pacific')
+
 
 df_growth=functions.change_growth_values(df_growth)
+
+wrl_renew = df_main.loc[df_main['Entity'] == 'World']
+wrl_renew =wrl_renew.reindex(['Entity', 'Code','Year','Renewables (% sub energy)','Electricity from other renewables including bioenergy (TWh)'],axis=1)
+
+wrl_renew = wrl_renew.rename(columns={'Entity':'ENTITY','Code':'ISO','Renewables (% sub energy)':'RENEWABLE ENERGY %','Electricity from other renewables including bioenergy (TWh)':'RENEWABLE ENERGY TWh','Year':'YEAR'})
 
 df_main.drop(df_main[(df_main['Year'] <1990)].index,axis=0,inplace=True)
 
 df_growth.drop(df_growth[(df_growth['Year'] <1990)].index,axis=0,inplace=True)
 
-df_main = df_main.rename(columns={"Entity": "ENTITY", "Code": "ISO","Year": "YEAR","Solar (% sub energy)": "SOLAR ENERGY %","Wind (% sub energy)": "WIND ENERGY %","Wind (% electricity)": "WIND ELECTRICITY %","Solar (% electricity)": "SOLAR ELECTRICITY %","Renewables (% electricity)": "RENEWABLE ELECTRICITY %","Hydro (% electricity)": "HYDRO ELECTRICITY %","Renewables (% sub energy)": "RENEWABLE ENERGY %","Renewables per capita (kWh - equivalent)": "RENEWABLE PER CAPITA (KWh)","Electricity from wind (TWh)": "WIND ELECTRICITY (TWh)","Electricity from hydro (TWh)": "HYDRO ELECTRICITY (TWh)","Electricity from solar (TWh)": "SOLAR ELECTRICITY (TWh)","Wind Generation - TWh": "WIND GENERATION (TWh)","Solar Generation - TWh": "SOLAR GENERATION (TWh)","Electricity from other renewables including bioenergy (TWh)": "OTHERS RENEWABLE ENERGIES (TWh)","Hydro Generation - TWh": "HYDRO GENERATION (TWh)","Hydro (% sub energy)": "HYDRO ENERGY %"})
-df_main.drop(['SOLAR GENERATION (TWh)','WIND GENERATION (TWh)','HYDRO GENERATION (TWh)'],axis=1,inplace=True)
+df_main = df_main.rename(columns={"Entity": "COUNTRY", "Code": "ISO","Year": "YEAR","Solar (% sub energy)": "SOLAR ENERGY %","Wind (% sub energy)": "WIND ENERGY %","Wind (% electricity)": "WIND ELECTRICITY %","Solar (% electricity)": "SOLAR ELECTRICITY %","Renewables (% electricity)": "RENEWABLE ENERGY %.","Hydro (% electricity)": "HYDRO ELECTRICITY %","Renewables (% sub energy)": "RENEWABLE ENERGY %","Renewables per capita (kWh - equivalent)": "RENEWABLE PER CAPITA (KWh)","Electricity from wind (TWh)": "WIND ENERGY (TWh)","Electricity from hydro (TWh)": "HYDRO ENERGY (TWh)","Electricity from solar (TWh)": "SOLAR ENERGY (TWh)","Wind Generation - TWh": "WIND GENERATION (TWh)","Solar Generation - TWh": "SOLAR GENERATION (TWh)","Electricity from other renewables including bioenergy (TWh)": "OTHERS RENEWABLE ENERGIES (TWh)","Hydro Generation - TWh": "HYDRO GENERATION (TWh)","Hydro (% sub energy)": "HYDRO ENERGY %"})
+df_main.drop(['SOLAR GENERATION (TWh)','WIND GENERATION (TWh)','HYDRO GENERATION (TWh)','WIND ELECTRICITY %', "SOLAR ELECTRICITY %","HYDRO ELECTRICITY %","RENEWABLE ENERGY %."],axis=1,inplace=True)
 df_growth = df_growth.rename(columns={"Entity": "ENTITY", "Code": "ISO","Year": "YEAR","Solar (% growth)": "SOLAR GROWTH %","Renewables (% growth)": "RENEWABLE GROWTH %","Solar (TWh growth - equivalent)": "SOLAR GROWTH TWh","Renewables (TWh growth - equivalent)": "RENEWABLE GROWTH TWh"})
 df_growth = df_growth.reindex(['ENTITY','ISO','YEAR','SOLAR GROWTH %','SOLAR GROWTH TWh','RENEWABLE GROWTH TWh','RENEWABLE GROWTH %'], axis=1)
 
+wrl = df_main.loc[df_main['COUNTRY'] == 'World']
+wrl=wrl.reset_index(drop=True)
 
-cou_list=['Africa', 'Asia Pacific', 'Eastern Africa', 'European Union (27)','Europe', 'Middle Africa', 'Middle East' ,'Non-OECD', 'OECD', 'Western Africa','World']
+
+
+cou_list=['Africa', 'Asia Pacific', 'Eastern Africa','CIS', 'European Union (27)','Europe', 'Middle Africa', 'Middle East' ,'Non-OECD', 'OECD', 'Western Africa','World']
 for i in cou_list:
-    df_main.drop(df_main[(df_main['ENTITY'] == i)].index,axis=0,inplace=True)
+    df_main.drop(df_main[(df_main['COUNTRY'] == i)].index,axis=0,inplace=True)
 
 df_main['CONTINENT']=df_main.apply(functions.convert,axis=1)
 continents = {
@@ -85,8 +87,36 @@ continents = {
 }
 df_main['CONTINENT']=df_main['CONTINENT'].map(continents)
 df_main['CONTINENT']=df_main.CONTINENT.str.upper()
-df_main = df_main.reindex(['ENTITY','ISO','CONTINENT','YEAR','SOLAR ELECTRICITY (TWh)','SOLAR ENERGY %','WIND ELECTRICITY (TWh)','WIND ENERGY %','WIND ELECTRICITY %','HYDRO ELECTRICITY (TWh)','HYDRO ENERGY %','HYDRO ELECTRICITY %','RENEWABLE ENERGY %','RENEWABLE ELECTRICITY %','RENEWABLE PER CAPITA (KWh)','OTHERS RENEWABLE ENERGIES (TWh)'], axis=1)
+df_main = df_main.reindex(['COUNTRY','ISO','CONTINENT','YEAR',"SOLAR ENERGY (TWh)",'SOLAR ENERGY %',"WIND ENERGY (TWh)",'WIND ENERGY %',"HYDRO ENERGY (TWh)",'HYDRO ENERGY %','RENEWABLE ENERGY %','RENEWABLE PER CAPITA (KWh)','OTHERS RENEWABLE ENERGIES (TWh)'], axis=1)
 
+
+dfGDP = dfGDP.rename(columns={"Country name": "COUNTRY",'Logged GDP per capita':'GDP PER CAPITA(2020)'})
+dfGDP=dfGDP[['COUNTRY','GDP PER CAPITA(2020)']]
+df_main=functions.merge(df_main,dfGDP,'COUNTRY')
+wrl.drop([
+        'RENEWABLE PER CAPITA (KWh)', 'WIND ENERGY (TWh)',
+       'HYDRO ENERGY (TWh)', 'SOLAR ENERGY (TWh)',
+       'OTHERS RENEWABLE ENERGIES (TWh)', 'Geo Biomass Other - TWh',
+       'Biofuels Production - TWh - Total'],axis=1,inplace=True)
+
+df_growth['ENTITY']=df_growth['ENTITY'].str.strip()
+df_growth['ENTITY'] = df_growth['ENTITY'].str.replace('\(BP\)','')
+def convert(row):
+    cn_code= pc.country_name_to_country_alpha2(row.ENTITY,cn_name_format='default')
+    conti_code=pc.country_alpha2_to_continent_code(cn_code)
+    return conti_code
+
+df_growth = df_growth.reindex(['ENTITY', 'ISO', 'YEAR', 
+       'RENEWABLE GROWTH TWh', 'RENEWABLE GROWTH %'],axis=1)
+
+df_growth = df_growth.rename(columns={"ENTITY": "COUNTRY"})
+df_growth['COUNTRY']=df_growth['COUNTRY'].str.strip()
+cou_list_g=['Africa','OECD ','Non-OECD ','Other Asia Pacific', 'Other Caribbean', 'Other Europe',
+       'Other Middle East', 'Other Northern Africa',
+       'Other South America', 'Other South and Central America','Eastern Africa ','Western Africa',
+       'Other Southern Africa','Western Africa','Other Asia Pacific ','Other Northern Africa ','Western Africa (BP)','Africa ','South and Central America', 'Upper-middle-income countries','South America','Northern Africa','Central America','CIS','CIS ','Caribbean','Other CIS','Oceania','North America','Lower-middle-income countries','High-income countries', 'Asia','Asia Pacific','Asia Pacific ', 'Eastern Africa', 'European Union (27)','Europe', 'Middle Africa', 'Middle East' ,'Non-OECD', 'OECD', 'Western Africa','World']
+for i in cou_list_g:
+    df_growth.drop(df_growth[(df_growth['COUNTRY'] == i)].index,axis=0,inplace=True)
 
 
 load_dotenv()
@@ -102,8 +132,8 @@ engine = alch.create_engine(connectionData)
 engine
 
 df_main.to_sql("renewable", if_exists="replace", index=False,con=engine)
-
 df_growth.to_sql("growth", if_exists="replace",index=False, con=engine)
+wrl_renew.to_sql("world", if_exists="replace",index=False, con=engine)
 
 
 
