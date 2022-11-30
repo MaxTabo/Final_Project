@@ -1,6 +1,9 @@
 import pandas as pd
 import pycountry_convert as pc
 
+#-----------------------------------------------------------------------------------------------------------
+# Merging different dataframes.
+
 def merge(df1,df2,columns):
     df3= pd.merge(df1, df2,  how='left', left_on=columns, right_on =columns)
     
@@ -9,6 +12,8 @@ def specific_merge(df1,list_):
     for i in list_:
         df1=merge(df1,i,['Entity','Year'])
     return df1
+#-----------------------------------------------------------------------------------------------------------
+# Dropping a specific column from all Dataframes.
     
 def drop_code(list_):
     list2=[]
@@ -16,7 +21,8 @@ def drop_code(list_):
         df.drop('Code',axis=1,inplace=True)
         list2.append(df)
     return list2
-
+#-----------------------------------------------------------------------------------------------------------
+# Changing ISO values.
 
 def change_value(df,column1,name1,column2,name_2):
     df.loc[df[column1] == name1, column2] = name_2
@@ -37,7 +43,8 @@ def change_growth_values(df_main):
 
 
     return df_main
-
+#-----------------------------------------------------------------------------------------------------------
+# Creating a continent column to filter countries.
 
 def convert(row):
     cn_code= pc.country_name_to_country_alpha2(row.COUNTRY,cn_name_format='default')
